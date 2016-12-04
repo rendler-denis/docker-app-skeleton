@@ -1,0 +1,50 @@
+FROM php:5.6-fpm
+
+MAINTAINER Denis-Florin Rendler <docker@rendler.me>
+
+# install some bare necessities
+RUN apt-get update && apt-get install -y \
+    curl \
+    libssl-dev \
+    libmcrypt-dev \
+    libpng12-dev \
+    libfreetype6-dev \
+    libpq-dev \
+    ssh \
+    vim \
+    git \
+    --no-install-recommends \
+    && rm -r /var/lib/apt/lists/*
+
+# configure gd library
+RUN docker-php-ext-configure gd \
+    --enable-gd-native-ttf \
+    --with-freetype-dir=/usr/include/freetype2
+
+RUN docker-php-ext-install \
+    pdo_mysql \
+    pdo_pgsql \
+    mcrypt \
+    gd
+
+# add XDebug for the dev env build
+RUN pecl install xdebug # \
+    # && docker-php-ext-enable xdebug
+
+# expose the xdebug port on dev build
+ARG XDEBUG_PORT
+ENV XDEBUG_EXPOSE_PORT ${XDEBUG_PORT:-9000}
+EXPOSE $XDEBUG_EXPOSE_PORT
+
+# configure app folder
+ARG WORK_DIR
+ENV WORK_DIR ${WORK_DIR:-/www/project}
+WORKDIR $WORK_DIR
+
+# Install Composer
+RUN curl -s http://getcomposer.org/installer | php \
+    && mv composer.phar /usr/local/bin/composer
+
+VOLUME "/usr/local/etc/php/conf.d"
+
+CMD ["php-fpm"]

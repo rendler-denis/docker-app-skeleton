@@ -1,0 +1,101 @@
+version: '2'
+
+services:
+
+### PHP FPM Container ###
+    php-fpm:
+        # select the build steps
+        build:
+            context: ./docker/php-fpm
+            dockerfile: Dockerfile-70
+
+        # name and tag the image
+        image: dev-php70:php-fpm-70
+
+        # add the project files
+        volumes_from:
+            - application
+
+        # add php-fpm config
+        volumes:
+            - ./docker/php-fpm/conf/php.ini:/usr/local/etc/php/php.ini
+            - ./docker/php-fpm/conf/xdebug.ini:/usr/local/etc/php/conf.d/xdebug.ini
+            - ./docker/php-fpm/conf/project.pool.conf:/usr/local/etc/php-fpm.d/www.conf
+
+        # add the XDEBUG port
+        ports:
+            - "9000:9000"
+
+        tty: true
+
+        environment:
+            PHP_IDE_CONFIG: "serverName=project"
+
+        env_file:
+            - ./.project.env
+
+        links:
+            - application
+            - db
+
+### Nginx Container ###
+    nginx:
+        build:
+            context: ./docker/nginx
+            dockerfile: Dockerfile
+
+        image: dev-nginx:dev-nginx
+
+        # open http ports
+        ports:
+            - "80:80"
+            - "443:443"
+
+        # link to php
+        links:
+            - php-fpm
+            - application
+
+        # add project files
+        volumes_from:
+            - application
+
+        # add the config files
+        volumes:
+            - ./logs/nginx:/var/log/nginx
+            - ./docker/nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./docker/nginx/sites/project.conf:/etc/nginx/sites-available/project.conf
+            - ./docker/nginx/default.conf:/etc/nginx/sites-enabled/00-default.conf
+
+        tty: true
+
+        env_file:
+            - ./.project.env
+
+
+### Application container ###
+    application:
+        build:
+            context: ./docker/application
+
+        image: dev-app:dev-app
+
+        volumes:
+            - ./:/www/project
+
+        tty: true
+
+
+### Database container ###
+    db:
+        build:
+            context: ./docker/database
+
+        image: dev-db:dev-database
+
+        tty: true
+
+        environment:
+            - "POSTGRES_USER:app"
+            - "POSTGRES_PASSWORD:app"
+            - "POSTGRES_DB:app"

@@ -1,0 +1,9 @@
+FROM postgres:latest
+
+MAINTAINER Denis-Florin Rendler <docker@rendler.me>
+
+EXPOSE 5432
+
+ENV POSTGRES_USER ${POSTGRES_USER:-root}
+ENV POSTGRES_PASSWORD ${POSTGRES_PASSWORD:-root}
+ENV POSTGRES_DB ${POSTGRES_DB:-project}
