@@ -13,19 +13,24 @@ RUN apt-get update && apt-get install -y \
     ssh \
     vim \
     git \
+    zlib1g-dev \
+    libicu-dev \
+    g++ \
     --no-install-recommends \
     && rm -r /var/lib/apt/lists/*
 
 # configure gd library
 RUN docker-php-ext-configure gd \
     --enable-gd-native-ttf \
-    --with-freetype-dir=/usr/include/freetype2
+    --with-freetype-dir=/usr/include/freetype2 \
+    && docker-php-ext-configure intl
 
 RUN docker-php-ext-install \
     pdo_mysql \
     pdo_pgsql \
     mcrypt \
-    gd
+    gd \
+    intl
 
 # add XDebug for the dev env build
 RUN pecl install xdebug # \

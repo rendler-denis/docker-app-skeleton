@@ -81,7 +81,7 @@ services:
         image: dev-app:dev-app
 
         volumes:
-            - ./:/www/project
+            - ./:${WORK_DIR}
 
         tty: true
 
